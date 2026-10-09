@@ -1,0 +1,89 @@
+# ===================================
+# GESTION PROYECTO - ROOT .gitignore
+# ===================================
+
+# IDE & Editor
+.vscode/
+.vscode
+.idea/
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Temporal & Cache
+.tmp/
+.temp/
+temp/
+*.tmp
+.cache/
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Backups
+*.bak
+*.backup
+*~
+
+# Node (compartido)
+node_modules/
+.npm/
+.yarn/
+
+# Build outputs (si existen en raíz)
+dist/
+build/
+out/
+
+# Testing
+coverage/
+.coverage/
+*.lcov
+
+# Secrets
+secrets/
+*.pem
+*.key
+*.crt
+
+# ===================================
+# NOTA IMPORTANTE:
+# Los repos individuales en:
+/gestion-proyecto-back
+/gestion-proyecto-frontend
+# tienen sus propios .gitignore detallados
+# ===================================
+
+# EXPLÍCIT: NO incluir directorios de repos
+gestion-proyecto-back/
+gestion-proyecto-frontend/
+
+# Asegurar que Git no los siga (son repos independientes)
+# Si están en este directorio, están en .git SEPARADOS

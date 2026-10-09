@@ -1,0 +1,71 @@
+{
+  "agents": {
+    "default": "backend-dev",
+    "available": [
+      "backend-dev",
+      "frontend-dev",
+      "nomina-specialist",
+      "database-admin",
+      "qa-tester"
+    ]
+  },
+  "skills": {
+    "available": [
+      "setup-nest-module",
+      "generate-migration"
+    ]
+  },
+  "development": {
+    "stack": "TypeScript Fullstack",
+    "backend": "NestJS",
+    "frontend": "Next.js + React",
+    "database": "PostgreSQL",
+    "testing": "Jest + React Testing Library",
+    "language": "TypeScript (Strict Mode)",
+    "principles": ["SOLID", "DRY", "KISS"]
+  },
+  "code_quality": {
+    "typescript_strict": true,
+    "coverage_minimum": 80,
+    "coverage_critical_modules": 85,
+    "no_any_allowed": true,
+    "lint_on_save": true
+  },
+  "critical_modules": {
+    "backend": [
+      "modules/nomina/**/*.ts",
+      "modules/registro-horas/**/*.ts",
+      "modules/auth/**/*.ts"
+    ],
+    "frontend": [
+      "app/(dashboard)/nomina/**/*.tsx",
+      "app/(dashboard)/registro-horas/**/*.tsx",
+      "components/forms/**/*.tsx"
+    ]
+  },
+  "git_hooks": {
+    "pre_commit": [
+      "npm run lint",
+      "npm run type-check"
+    ],
+    "pre_push": [
+      "npm run test -- --coverage"
+    ]
+  },
+  "paths": {
+    "backend_root": "backend",
+    "frontend_root": "frontend",
+    "documentation": {
+      "main": "claude.md",
+      "plan": "../PLAN_IMPLEMENTACION_TYPESCRIPT.md",
+      "stack": "../STACK_TYPESCRIPT_FULLSTACK.md"
+    }
+  },
+  "reminders": {
+    "on_backend_file_edit": "Recuerda: SOLID, DRY, KISS. Inyección de dependencias, sin hardcoding.",
+    "on_nomina_edit": "⚠️ CRÍTICO: Validar con especialista laboral. Parámetros legales Colombia 2026.",
+    "on_test_skip": "❌ No skipear tests. Si falla, corregir.",
+    "on_any_usage": "❌ No uses `any`. TypeScript Strict Mode.",
+    "on_migration": "Generar con skill: generate-migration. Nunca modificar BD directamente."
+  }
+}
