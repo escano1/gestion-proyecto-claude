@@ -12,7 +12,7 @@ Este repositorio contiene los **lineamientos de desarrollo** (configuración de 
 
 ## Ambiente local
 
-Requisitos: **Node.js 24.15+** (o 22.22.3+ de la línea 22) y **Docker**. En Windows funcionan PowerShell, Git Bash o WSL.
+Requisitos: **Node.js 24** (24.15 o posterior; también 22.22.3+) y **Docker**. En Windows funcionan PowerShell, Git Bash o WSL.
 
 ```bash
 mkdir GestionProyecto
