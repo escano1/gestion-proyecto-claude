@@ -7,7 +7,7 @@ ERP web para una empresa de ingeniería eléctrica en Colombia: proyectos, traba
 | Carpeta | Repo | Despliegue |
 |---|---|---|
 | `./` (este) | lineamientos: `.claude/`, `docs/` | — |
-| `gestion-proyecto-back/` | API NestJS (repo git independiente) | Railway (Dockerfile + `railway.json`) |
+| `gestion-proyecto-back/` | API NestJS (repo git independiente) | Railway (Dockerfile; pre-deploy y healthcheck en el panel) |
 | `gestion-proyecto-frontend/` | Next.js (repo git independiente) | Vercel |
 
 El contrato de API está en `docs/API.md`: es la fuente de verdad entre backend y frontend; si cambia una forma de respuesta, actualícelo.
