@@ -87,3 +87,6 @@ gestion-proyecto-frontend/
 
 # Asegurar que Git no los siga (son repos independientes)
 # Si están en este directorio, están en .git SEPARADOS
+
+# Configuración personal de Claude Code (permisos locales)
+.claude/settings.local.json

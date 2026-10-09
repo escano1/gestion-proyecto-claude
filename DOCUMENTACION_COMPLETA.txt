@@ -1,3 +1,6 @@
+DOCUMENTO HISTÓRICO DE PLANEACIÓN INICIAL: puede no coincidir con el sistema implementado.
+Vigente: README.md, .claude/CLAUDE.md, docs/API.md y los README de cada repositorio.
+
 ================================================================================
   DOCUMENTACIÓN Y ORGANIZACIÓN COMPLETADA - 2026-10-08
 ================================================================================
@@ -96,7 +99,7 @@ Tests nómina a escribir:                 50+
 
 PASO 1: Lectura Rápida (30 min)
   1. README.md (raíz)
-  2. .claude/claude.md
+  2. .claude/CLAUDE.md
   3. ESTRUCTURA_PROYECTO.md
 
 PASO 2: Lectura Profunda (60 min)

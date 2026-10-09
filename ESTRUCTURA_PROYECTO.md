@@ -1,3 +1,5 @@
+> **Documento histórico de planeación inicial.** Puede no coincidir con el sistema implementado. Vigente: `README.md`, `.claude/CLAUDE.md`, `docs/API.md` y los README de cada repositorio.
+
 # 📊 Estructura Completa del Proyecto
 
 Organización visual del monorepo de gestión de nómina y proyectos.
@@ -194,7 +196,7 @@ Nivel 1: INICIO
 └── Guía general
 
 Nivel 2: LINEAMIENTOS
-├── .claude/claude.md               ← Visión y principios
+├── .claude/CLAUDE.md               ← Visión y principios
 ├── PLAN_IMPLEMENTACION...          ← Roadmap 14 semanas
 └── STACK_TYPESCRIPT_FULLSTACK.md   ← Arquitectura
 
@@ -224,7 +226,7 @@ Nivel 5: CÓDIGO FUENTE
    ```
    README.md (este proyecto)
      ↓
-   .claude/claude.md (lineamientos)
+   .claude/CLAUDE.md (lineamientos)
    ```
 
 2. **Elegir agente según tarea**
@@ -252,7 +254,7 @@ Nivel 5: CÓDIGO FUENTE
 ## ✅ Checklist: Antes de Codear
 
 - [ ] Leer README principal (raíz)
-- [ ] Leer .claude/claude.md
+- [ ] Leer .claude/CLAUDE.md
 - [ ] Leer PLAN_IMPLEMENTACION_TYPESCRIPT.md
 - [ ] Leer agente correspondiente
 - [ ] Instalar dependencias: `npm install`
@@ -305,7 +307,7 @@ Fase 6 (Sem 13-14): QA + Deployment
 | Necesito... | Ir a... |
 |---|---|
 | Entender proyecto | README.md (raíz) |
-| Lineamientos | .claude/claude.md |
+| Lineamientos | .claude/CLAUDE.md |
 | Roadmap | docs/PLAN_IMPLEMENTACION_TYPESCRIPT.md |
 | Arquitectura | docs/STACK_TYPESCRIPT_FULLSTACK.md |
 | Agentes | .claude/agents/*.md |
@@ -361,7 +363,7 @@ cd gestion-proyecto-frontend && npm run build
 | Archivo | Propósito | Crítico |
 |---------|-----------|---------|
 | README.md | Guía inicio | ⭐⭐⭐ |
-| .claude/claude.md | Lineamientos | ⭐⭐⭐ |
+| .claude/CLAUDE.md | Lineamientos | ⭐⭐⭐ |
 | PLAN_IMPLEMENTACION... | Roadmap | ⭐⭐ |
 | .claude/agents/nomina-specialist.md | Nómina | ⭐⭐⭐ |
 | gestion-proyecto-back/README.md | Backend | ⭐⭐ |

@@ -1,3 +1,5 @@
+> **Documento histórico de planeación.** El stack implementado (NestJS 12 ESM + Vitest, Next.js 16) y los parámetros legales vigentes (jornada 42 h, dominical 90 %, retención por tabla UVT del art. 383 E.T.) difieren de lo escrito aquí. Fuente de verdad: `.claude/CLAUDE.md`, `docs/API.md` y los README de cada repositorio.
+
 # STACK TYPESCRIPT FULLSTACK - NÓMINA Y PROYECTOS
 
 ## Stack Actualizado

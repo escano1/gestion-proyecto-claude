@@ -1,3 +1,5 @@
+> **Documento histórico de planeación inicial.** Puede no coincidir con el sistema implementado. Vigente: `README.md`, `.claude/CLAUDE.md`, `docs/API.md` y los README de cada repositorio.
+
 # 🎯 Configuración Claude Code para Nómina App
 
 Estructura de agentes y skills para desarrollo optimizado del sistema de nómina y proyectos.

@@ -1,3 +1,5 @@
+> **Documento histórico de planeación inicial.** Puede no coincidir con el sistema implementado. Vigente: `README.md`, `.claude/CLAUDE.md`, `docs/API.md` y los README de cada repositorio.
+
 # ✅ Setup .claude Completado
 
 ## 🎯 Resumen de lo que se creó
@@ -168,7 +170,7 @@ Genera TypeORM migration automática
 
 ### Paso 1: Leer la Visión General
 ```
-.claude/claude.md
+.claude/CLAUDE.md
 └── Stack, parámetros legales, estructura
 ```
 
