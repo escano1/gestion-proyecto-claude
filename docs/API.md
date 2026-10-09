@@ -26,7 +26,7 @@ Cualquier cambio de forma en una respuesta debe reflejarse aquí.
 | EstadoTrabajador | `ACTIVO`, `INACTIVO` |
 | EstadoProyecto | `ACTIVO`, `SUSPENDIDO`, `FINALIZADO` |
 | CodigoTipoHora | `ORD`, `NOC`, `HED`, `HEN`, `DOM`, `DOMN`, `HEDD`, `HEDN` |
-| TipoPeriodo | `QUINCENAL`, `MENSUAL` |
+| TipoPeriodo | `QUINCENAL`, `MENSUAL`, `PERSONALIZADO` |
 | EstadoLiquidacion | `BORRADOR`, `CERRADA` |
 | TipoConcepto | `DEVENGADO`, `DEDUCCION` |
 | EstadoMaterial | `PENDIENTE`, `SOLICITADO`, `ENTREGADO`, `INSTALADO` |
@@ -134,9 +134,10 @@ Access token: 15 min. Refresh: 7 días. Credenciales inválidas o usuario inacti
 | GET | `/trabajadores/:id` | — | `Trabajador` |
 | POST | `/trabajadores` | `CrearTrabajador` | `Trabajador` (409 documento duplicado) |
 | PATCH | `/trabajadores/:id` | `Partial<CrearTrabajador>` | `Trabajador` |
+| DELETE | `/trabajadores/:id` | — | 204 · 409 si tiene asignaciones, horas o nómina registradas (marcar INACTIVO en su lugar) |
 | GET | `/trabajadores/:id/asignaciones` | — | `Asignacion[]` (historial, más reciente primero) |
 
-`CrearTrabajador`: obligatorios `nombre, tipoDocumento, numeroDocumento, cargo, tipoSalario, salarioBase (>0), tipoContrato, fechaIngreso`; opcionales `tipoJornada` (def. `COMPLETA`), `horasSemanales` (obligatorio y 1–48 si `PARCIAL`; se ignora/limpia si `COMPLETA`), `aplicaAuxilioTransporte` (def. `true`), `fechaRetiro` (≥ fechaIngreso), `estado` (def. `ACTIVO`; `INACTIVO` exige `fechaRetiro`), `email, telefono, eps, fondoPension`.
+`CrearTrabajador`: obligatorios `nombre, tipoDocumento, numeroDocumento, cargo, tipoSalario, salarioBase (>0), tipoContrato, fechaIngreso`; opcionales `tipoJornada` (def. `COMPLETA`), `horasSemanales` (obligatorio y 1–48 si `PARCIAL`; se ignora/limpia si `COMPLETA`), `fechaRetiro` (≥ fechaIngreso), `estado` (def. `ACTIVO`; `INACTIVO` exige `fechaRetiro`), `email, telefono, eps, fondoPension`. `aplicaAuxilioTransporte` no se envía: el backend lo calcula y sobrescribe en cada creación/edición según el salario mensual equivalente (≤ 2 SMMLV vigente).
 Cambios de salario/jornada/fechas marcan las liquidaciones `BORRADOR` con `requiereRecalculo = true`.
 
 ## Proyectos (lectura: todos · escritura: ADMIN, GESTOR_PROYECTOS)
@@ -147,6 +148,7 @@ Cambios de salario/jornada/fechas marcan las liquidaciones `BORRADOR` con `requi
 | GET | `/proyectos/:id` | — | `Proyecto` |
 | POST | `/proyectos` | obligatorios `codigo, nombre, cliente, ubicacion, fechaInicio`; opcionales `descripcion, fechaFinPlaneada, fechaFinReal, estado, presupuesto` | `Proyecto` (409 código duplicado) |
 | PATCH | `/proyectos/:id` | parcial | `Proyecto` |
+| DELETE | `/proyectos/:id` | — | 204 · 409 si tiene asignaciones, horas, materiales, herramientas, hitos o bitácora registrados (marcar SUSPENDIDO/FINALIZADO en su lugar) |
 
 Fechas de fin ≥ fechaInicio (400).
 
@@ -203,7 +205,7 @@ Alertas (no bloquean; se devuelven en `alertas`), evaluadas con todas las horas 
 | Método | Ruta | Cuerpo / Query | Respuesta |
 |---|---|---|---|
 | GET | `/nomina/liquidaciones` | `?anio` | `LiquidacionResumen[]` (fechaInicio desc) |
-| POST | `/nomina/liquidaciones` | `{ tipoPeriodo, anio, mes, quincena? }` (`quincena` 1\|2 obligatoria si QUINCENAL) | `LiquidacionResumen & { nominas: NominaTrabajadorResumen[] }` · 409 si se solapa con otra |
+| POST | `/nomina/liquidaciones` | `{ tipoPeriodo, anio?, mes?, quincena? }` (`anio`/`mes` obligatorios salvo PERSONALIZADO; `quincena` 1\|2 obligatoria si QUINCENAL) o `{ tipoPeriodo: 'PERSONALIZADO', fechaInicio, fechaFin }` (rango de hasta 31 días; año/mes se derivan de `fechaInicio`; el pago se prorratea por días trabajados) | `LiquidacionResumen & { nominas: NominaTrabajadorResumen[] }` · 409 si se solapa con otra |
 | GET | `/nomina/liquidaciones/:id` | — | igual que POST |
 | POST | `/nomina/liquidaciones/:id/recalcular` | — | igual · 409 si CERRADA |
 | POST | `/nomina/liquidaciones/:id/cerrar` | — | igual · 409 si ya cerrada o `requiereRecalculo` |
