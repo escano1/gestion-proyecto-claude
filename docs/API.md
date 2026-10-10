@@ -101,7 +101,7 @@ type Desprendible = NominaTrabajadorResumen & {
 | Método | Ruta | Roles | Cuerpo / Query | Respuesta |
 |---|---|---|---|---|
 | GET | `/health` | público | — | `{ estado: 'ok', baseDatos: 'ok' }` |
-| POST | `/auth/login` | público (máx. 10/min) | `{ email, password }` | `{ accessToken, refreshToken, usuario: Usuario }` |
+| POST | `/auth/login` | público (máx. 10/min) | `{ email, password }` (`email` es el usuario: cualquier texto, p. ej. `admin`; la contraseña solo debe ser no vacía) | `{ accessToken, refreshToken, usuario: Usuario }` |
 | POST | `/auth/refresh` | público | `{ refreshToken }` | igual que login |
 | GET | `/auth/me` | todos | — | `Usuario` |
 | PATCH | `/auth/password` | todos | `{ passwordActual, passwordNueva }` (nueva ≥ 8, con letra y número) | 204 |
