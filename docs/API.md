@@ -26,13 +26,8 @@ Cualquier cambio de forma en una respuesta debe reflejarse aquí.
 | EstadoTrabajador | `ACTIVO`, `INACTIVO` |
 | EstadoProyecto | `ACTIVO`, `SUSPENDIDO`, `FINALIZADO` |
 | CodigoTipoHora | `ORD`, `NOC`, `HED`, `HEN`, `DOM`, `DOMN`, `HEDD`, `HEDN` |
-| TipoPeriodo | `QUINCENAL`, `MENSUAL`, `PERSONALIZADO` |
 | EstadoLiquidacion | `BORRADOR`, `CERRADA` |
 | TipoConcepto | `DEVENGADO`, `DEDUCCION` |
-| EstadoMaterial | `PENDIENTE`, `SOLICITADO`, `ENTREGADO`, `INSTALADO` |
-| EstadoHerramienta | `ASIGNADA`, `DEVUELTA`, `EXTRAVIADA` |
-| EstadoHito | `PENDIENTE`, `EN_PROGRESO`, `COMPLETADO` |
-| EstadoAvance | `EN_TIEMPO`, `RETRASADO`, `ADELANTADO`, `SIN_HITOS` |
 | AccionAuditoria | `CREAR`, `ACTUALIZAR`, `ELIMINAR`, `CALCULAR`, `CERRAR`, `REABRIR` |
 | CodigoParametro | `SMMLV`, `AUXILIO_TRANSPORTE`, `UVT`, `JORNADA_MAXIMA_SEMANAL`, `RECARGO_NOCTURNO`, `RECARGO_EXTRA_DIURNA`, `RECARGO_EXTRA_NOCTURNA`, `RECARGO_DOMINICAL_FESTIVO`, `APORTE_SALUD_EMPLEADO`, `APORTE_PENSION_EMPLEADO`, `LIMITE_HORAS_EXTRA_DIA`, `LIMITE_HORAS_EXTRA_SEMANA` |
 
@@ -45,7 +40,7 @@ type Trabajador = {
   id: number; nombre: string; tipoDocumento: TipoDocumento; numeroDocumento: string; cargo: string;
   tipoSalario: TipoSalario; salarioBase: number;            // mensual o valor hora según tipoSalario
   tipoContrato: TipoContrato; tipoJornada: TipoJornada; horasSemanales: number | null;
-  aplicaAuxilioTransporte: boolean; fechaIngreso: string; fechaRetiro: string | null;
+  aplicaAuxilioTransporte: boolean;
   estado: EstadoTrabajador; email: string | null; telefono: string | null; eps: string | null; fondoPension: string | null;
   creadoEn: string; actualizadoEn: string;
 };
@@ -61,8 +56,7 @@ type ProyectoRef = { id: number; codigo: string; nombre: string };
 type UsuarioRef = { id: number; nombre: string };
 
 type Asignacion = {
-  id: number; trabajadorId: number; proyectoId: number; fechaInicio: string; fechaFin: string | null;
-  rolEnProyecto: string | null; vigente: boolean;            // vigente hoy (zona America/Bogota)
+  id: number; trabajadorId: number; proyectoId: number; rolEnProyecto: string | null;
   trabajador: TrabajadorRef; proyecto: ProyectoRef; creadoEn: string;
 };
 
@@ -80,8 +74,9 @@ type RegistroHoras = {
 };
 
 type LiquidacionResumen = {
-  id: number; tipoPeriodo: TipoPeriodo; anio: number; mes: number; quincena: 1 | 2 | null;
-  fechaInicio: string; fechaFin: string; estado: EstadoLiquidacion; requiereRecalculo: boolean;
+  id: number; anio: number;                                   // año del lunes de la semana liquidada
+  fechaInicio: string; fechaFin: string;                      // lunes y domingo de la semana
+  estado: EstadoLiquidacion; requiereRecalculo: boolean;
   totalDevengado: number; totalDeducciones: number; totalNeto: number; numeroTrabajadores: number;
   calculadaEn: string | null; cerradaEn: string | null; creadoEn: string;
 };
@@ -95,15 +90,10 @@ type NominaTrabajadorResumen = {
 type Desprendible = NominaTrabajadorResumen & {
   tipoDocumento: TipoDocumento; salarioBase: number; valorHora: number;
   parametros: Record<string, number>;                         // valores legales aplicados
-  liquidacion: { id: number; tipoPeriodo: TipoPeriodo; fechaInicio: string; fechaFin: string; estado: EstadoLiquidacion };
+  liquidacion: { id: number; fechaInicio: string; fechaFin: string; estado: EstadoLiquidacion };
   conceptos: { tipo: TipoConcepto; codigo: string; descripcion: string; cantidad: number | null; valorUnitario: number | null; valor: number }[];
 };
 
-type AvanceProyecto = {
-  avanceReal: number; avancePlaneado: number;                 // 0–100
-  estado: EstadoAvance; sumaPesos: number;
-  curva: { fecha: string; planeado: number; real: number }[]; // acumulados 0–100 (curva S)
-};
 ```
 
 ## Salud y autenticación
@@ -134,10 +124,10 @@ Access token: 15 min. Refresh: 7 días. Credenciales inválidas o usuario inacti
 | GET | `/trabajadores/:id` | — | `Trabajador` |
 | POST | `/trabajadores` | `CrearTrabajador` | `Trabajador` (409 documento duplicado) |
 | PATCH | `/trabajadores/:id` | `Partial<CrearTrabajador>` | `Trabajador` |
-| DELETE | `/trabajadores/:id` | — | 204 · 409 si tiene asignaciones, horas o nómina registradas (marcar INACTIVO en su lugar) |
-| GET | `/trabajadores/:id/asignaciones` | — | `Asignacion[]` (historial, más reciente primero) |
+| DELETE | `/trabajadores/:id` | — | 204 · elimina también sus horas, asignaciones y desprendibles de nómina; las liquidaciones afectadas recalculan sus totales |
+| GET | `/trabajadores/:id/asignaciones` | — | `Asignacion[]` (proyectos en los que está asignado) |
 
-`CrearTrabajador`: obligatorios `nombre, tipoDocumento, numeroDocumento, cargo, tipoSalario, salarioBase (>0), tipoContrato, fechaIngreso`; opcionales `tipoJornada` (def. `COMPLETA`), `horasSemanales` (obligatorio y 1–48 si `PARCIAL`; se ignora/limpia si `COMPLETA`), `fechaRetiro` (≥ fechaIngreso), `estado` (def. `ACTIVO`; `INACTIVO` exige `fechaRetiro`), `email, telefono, eps, fondoPension`. `aplicaAuxilioTransporte` no se envía: el backend lo calcula y sobrescribe en cada creación/edición según el salario mensual equivalente (≤ 2 SMMLV vigente).
+`CrearTrabajador`: obligatorios `nombre, tipoDocumento, numeroDocumento, cargo, tipoSalario, salarioBase (>0), tipoContrato`; opcionales `tipoJornada` (def. `COMPLETA`), `horasSemanales` (obligatorio y 1–48 si `PARCIAL`; se ignora/limpia si `COMPLETA`), `estado` (def. `ACTIVO`; solo los `ACTIVO` entran en la nómina semanal, salvo que tengan horas esa semana), `email, telefono, eps, fondoPension`. `aplicaAuxilioTransporte` no se envía: el backend lo calcula y sobrescribe en cada creación/edición según el salario mensual equivalente (≤ 2 SMMLV vigente).
 Cambios de salario/jornada/fechas marcan las liquidaciones `BORRADOR` con `requiereRecalculo = true`.
 
 ## Proyectos (lectura: todos · escritura: ADMIN, GESTOR_PROYECTOS)
@@ -148,7 +138,7 @@ Cambios de salario/jornada/fechas marcan las liquidaciones `BORRADOR` con `requi
 | GET | `/proyectos/:id` | — | `Proyecto` |
 | POST | `/proyectos` | obligatorios `codigo, nombre, cliente, ubicacion, fechaInicio`; opcionales `descripcion, fechaFinPlaneada, fechaFinReal, estado, presupuesto` | `Proyecto` (409 código duplicado) |
 | PATCH | `/proyectos/:id` | parcial | `Proyecto` |
-| DELETE | `/proyectos/:id` | — | 204 · 409 si tiene asignaciones, horas, materiales, herramientas, hitos o bitácora registrados (marcar SUSPENDIDO/FINALIZADO en su lugar) |
+| DELETE | `/proyectos/:id` | — | 204 · elimina también sus horas registradas, asignaciones y materiales; las liquidaciones en borrador quedan con `requiereRecalculo` |
 
 Fechas de fin ≥ fechaInicio (400).
 
@@ -156,12 +146,12 @@ Fechas de fin ≥ fechaInicio (400).
 
 | Método | Ruta | Cuerpo / Query | Respuesta |
 |---|---|---|---|
-| GET | `/asignaciones` | `?proyectoId&trabajadorId&vigenteEn=fecha&desde&hasta` (`desde/hasta`: se solapan con el rango) | `Asignacion[]` |
-| POST | `/asignaciones` | `{ trabajadorId, proyectoId, fechaInicio, fechaFin?, rolEnProyecto? }` | `Asignacion` |
-| PATCH | `/asignaciones/:id` | `{ fechaInicio?, fechaFin?, rolEnProyecto? }` (`fechaFin: null` la deja abierta) | `Asignacion` |
-| DELETE | `/asignaciones/:id` | — | 204 · 409 si hay horas registradas del trabajador en el proyecto dentro del rango |
+| GET | `/asignaciones` | `?proyectoId&trabajadorId` | `Asignacion[]` |
+| POST | `/asignaciones` | `{ trabajadorId, proyectoId, rolEnProyecto? }` | `Asignacion` · 409 si ya está asignado |
+| PATCH | `/asignaciones/:id` | `{ rolEnProyecto? }` | `Asignacion` |
+| DELETE | `/asignaciones/:id` | — | 204 · 409 si hay horas registradas del trabajador en el proyecto |
 
-Reglas: fechaFin ≥ fechaInicio; fechaInicio ≥ fechaIngreso del trabajador; no puede solaparse con otra asignación del mismo trabajador al mismo proyecto (409). Un trabajador puede estar en varios proyectos a la vez.
+Una asignación por trabajador y proyecto (409 si se repite), sin fechas. Un trabajador puede estar en varios proyectos a la vez.
 
 ## Tipos de hora y parámetros legales
 
@@ -185,12 +175,14 @@ Reglas: fechaFin ≥ fechaInicio; fechaInicio ≥ fechaIngreso del trabajador; n
 | DELETE | `/registro-horas/:id` | — | 204 |
 | PUT | `/registro-horas/lote` | `{ registros: { trabajadorId, proyectoId, fecha, observacion?, detalles }[] }` (1–500) | `{ creados, actualizados, eliminados, alertas: string[] }` |
 
-`PUT /lote` es un upsert transaccional por (trabajador, proyecto, fecha): crea, reemplaza detalles o, si todas las horas del ítem son 0 o no hay detalles, elimina el registro existente. Si un ítem falla, no se guarda nada y el 400/409 indica el ítem: `"Registro 3 (trabajador 5, 2026-10-06): ..."`.
+Las horas se registran **por día**: cada registro es la jornada de un trabajador en un proyecto y una fecha, con las horas por tipo de hora. La nómina agrupa los días de cada semana (lunes a domingo).
+
+`PUT /lote` es un upsert transaccional por (trabajador, proyecto, fecha): crea, reemplaza detalles o, si todas las horas del ítem son 0 o no hay detalles, elimina el registro existente. Si un ítem falla, no se guarda nada y el 400/409 indica el ítem: `"Registro 3 (trabajador 5, semana 2026-10-05): ..."`.
 
 Validaciones (bloquean con 400 salvo indicación):
-- `horas` > 0 y ≤ 24 con máx. 2 decimales (en lote se permiten 0 para borrar); sin tipos repetidos; tipos existentes y activos.
-- `fecha` ≤ hoy (America/Bogota), ≥ fechaIngreso y ≤ fechaRetiro del trabajador.
-- El trabajador debe tener una asignación al proyecto vigente en esa fecha.
+- `horas` > 0 y ≤ 168 con máx. 2 decimales (en lote se permiten 0 para borrar); sin tipos repetidos; tipos existentes y activos.
+- `fecha` dentro de la semana en curso o anterior (America/Bogota): se pueden registrar sábado y domingo de la semana actual; no semanas futuras.
+- El trabajador debe estar asignado al proyecto.
 - Suma de horas del trabajador en el día (todos los proyectos) ≤ 24.
 - 409 si la fecha pertenece a una liquidación `CERRADA` ("El periodo ya fue liquidado y cerrado").
 - Toda creación, modificación o eliminación se audita y marca `requiereRecalculo` en la liquidación `BORRADOR` que cubra la fecha.
@@ -205,7 +197,7 @@ Alertas (no bloquean; se devuelven en `alertas`), evaluadas con todas las horas 
 | Método | Ruta | Cuerpo / Query | Respuesta |
 |---|---|---|---|
 | GET | `/nomina/liquidaciones` | `?anio` | `LiquidacionResumen[]` (fechaInicio desc) |
-| POST | `/nomina/liquidaciones` | `{ tipoPeriodo, anio?, mes?, quincena? }` (`anio`/`mes` obligatorios salvo PERSONALIZADO; `quincena` 1\|2 obligatoria si QUINCENAL) o `{ tipoPeriodo: 'PERSONALIZADO', fechaInicio, fechaFin }` (rango de hasta 31 días; año/mes se derivan de `fechaInicio`; el pago se prorratea por días trabajados) | `LiquidacionResumen & { nominas: NominaTrabajadorResumen[] }` · 409 si se solapa con otra |
+| POST | `/nomina/liquidaciones` | `{ fecha }` (cualquier día de la semana a liquidar; se liquida de lunes a domingo) | `LiquidacionResumen & { nominas: NominaTrabajadorResumen[] }` · 409 si esa semana ya está liquidada |
 | GET | `/nomina/liquidaciones/:id` | — | igual que POST |
 | POST | `/nomina/liquidaciones/:id/recalcular` | — | igual · 409 si CERRADA |
 | POST | `/nomina/liquidaciones/:id/cerrar` | — | igual · 409 si ya cerrada o `requiereRecalculo` |
@@ -216,43 +208,23 @@ Alertas (no bloquean; se devuelven en `alertas`), evaluadas con todas las horas 
 | GET | `/nomina/desprendibles/:id` | — | `Desprendible` |
 | GET | `/nomina/desprendibles/:id/pdf` | — | archivo `.pdf` (comprobante de pago) |
 
-Periodos: quincena 1 = días 1–15, quincena 2 = 16–fin de mes; mensual = mes completo. Se liquida a todo trabajador con vínculo en el periodo (`fechaIngreso ≤ fin` y `fechaRetiro` nula o ≥ inicio); los de salario `POR_HORA` solo si tienen horas.
+La nómina es **semanal** (lunes a domingo, 7 días). Se liquida a los trabajadores `ACTIVO` y a cualquier trabajador con horas esa semana; los de salario `POR_HORA` solo si tienen horas. El salario mensual se paga por días (7/30 por semana) y el auxilio de transporte también (7/30). A quien cobra por hora se le pagan los días distintos con horas registradas esa semana (días laborados × auxilio ÷ 30).
 Las descargas usan `Content-Disposition: attachment; filename="..."` (header expuesto por CORS).
 
-## Materiales, herramientas, hitos y bitácora (lectura: todos · escritura: ADMIN, GESTOR_PROYECTOS)
+## Materiales (lectura: todos · escritura: ADMIN, GESTOR_PROYECTOS)
 
 | Método | Ruta | Cuerpo / Query | Respuesta |
 |---|---|---|---|
-| GET | `/proyectos/:proyectoId/materiales` | `?estado` | `Material[]` (fechaSolicitud desc) |
-| POST | `/proyectos/:proyectoId/materiales` | `{ nombre, descripcion?, unidadMedida, cantidadSolicitada, estado?, fechaSolicitud? (def. hoy), fechaRequerida?, observaciones? }` | `Material` |
-| PATCH | `/materiales/:id` | parcial + `cantidadEntregada?, fechaEntrega?` | `Material` (al pasar a ENTREGADO/INSTALADO sin `fechaEntrega` se asigna hoy) |
+| GET | `/proyectos/:proyectoId/materiales` | — | `Material[]` (más reciente primero) |
+| POST | `/proyectos/:proyectoId/materiales` | `{ nombre, unidadMedida, cantidadSolicitada (>0), precioUnitario (≥0) }` | `Material` |
+| PATCH | `/materiales/:id` | parcial | `Material` |
 | DELETE | `/materiales/:id` | — | 204 |
-| GET | `/proyectos/:proyectoId/herramientas` | `?estado` | `Herramienta[]` |
-| POST | `/proyectos/:proyectoId/herramientas` | `{ nombre, codigo?, cantidad, responsableId?, fechaAsignacion, fechaDevolucionPrevista?, observaciones? }` | `Herramienta` |
-| PATCH | `/herramientas/:id` | parcial + `estado?, fechaDevolucion?` | `Herramienta` (DEVUELTA sin fecha → hoy) |
-| DELETE | `/herramientas/:id` | — | 204 |
-| GET | `/proyectos/:proyectoId/hitos` | — | `Hito[]` (orden, fechaPlaneada) |
-| POST | `/proyectos/:proyectoId/hitos` | `{ nombre, descripcion?, orden?, fechaPlaneada, peso (0–100], porcentajeAvance? }` | `Hito` |
-| PATCH | `/hitos/:id` | parcial + `fechaReal?` | `Hito` (estado se deriva del avance: 0 PENDIENTE, 100 COMPLETADO —con fechaReal hoy si falta—, otro EN_PROGRESO) |
-| DELETE | `/hitos/:id` | — | 204 |
-| GET | `/proyectos/:proyectoId/avance` | — | `AvanceProyecto` |
-| GET | `/proyectos/:proyectoId/bitacora` | `?desde&hasta` | `Entrada[]` (fecha desc, creadoEn desc) |
-| POST | `/proyectos/:proyectoId/bitacora` | `multipart/form-data`: `fecha, descripcion, observaciones?, archivos[]` (máx. 5 adjuntos por entrada contando los existentes, 10 MB c/u; jpg, png, webp, pdf, docx, xlsx; el contenido se verifica por sus primeros bytes) | `Entrada` |
-| POST | `/bitacora/:id/adjuntos` | `multipart/form-data`: `archivos[]` | `Entrada` |
-| DELETE | `/bitacora/:id` | — (ADMIN o autor) | 204 |
-| GET | `/bitacora/adjuntos/:id` | — | archivo (inline para imágenes/PDF) |
-| DELETE | `/bitacora/adjuntos/:id` | — (ADMIN o autor) | 204 |
+
 
 ```ts
-type Material = { id; proyectoId; nombre; descripcion; unidadMedida; cantidadSolicitada; cantidadEntregada; estado: EstadoMaterial;
-  fechaSolicitud; fechaRequerida; fechaEntrega; observaciones; solicitadoPor: UsuarioRef; creadoEn; actualizadoEn };
-type Herramienta = { id; proyectoId; nombre; codigo; cantidad; responsable: { id; nombre } | null; fechaAsignacion;
-  fechaDevolucionPrevista; fechaDevolucion; estado: EstadoHerramienta; observaciones; vencida: boolean; creadoEn; actualizadoEn };
-type Hito = { id; proyectoId; nombre; descripcion; orden; fechaPlaneada; fechaReal; peso; porcentajeAvance; estado: EstadoHito; creadoEn; actualizadoEn };
-type Entrada = { id; proyectoId; fecha; descripcion; observaciones; autor: UsuarioRef;
-  adjuntos: { id; nombreArchivo; mimeType; tamanoBytes; creadoEn }[]; creadoEn };
+type Material = { id; proyectoId; nombre; unidadMedida; cantidadSolicitada; precioUnitario;
+  costo: number /* precioUnitario × cantidadSolicitada, pesos enteros */; creadoEn; actualizadoEn };
 ```
-`vencida`: ASIGNADA con `fechaDevolucionPrevista` < hoy.
 
 ## Reportes y dashboard (todos; los montos de nómina solo para ADMIN y NOMINA)
 
@@ -264,9 +236,7 @@ El costo de mano de obra por proyecto es un indicador de gestión (horas × valo
 | GET | `/reportes/costos-proyectos` | `desde, hasta` | `{ filas: { proyectoId, codigo, nombre, estado, presupuesto, horas, costo }[], total }` |
 | GET | `/reportes/alertas-horas-extra` | `desde, hasta` | `{ alertas: { trabajadorId, nombre, tipo: 'EXTRA_DIA'\|'EXTRA_SEMANA'\|'JORNADA_SEMANA', periodo: string, horas, limite, mensaje }[] }` (`periodo`: la fecha o el lunes de la semana) |
 | GET | `/reportes/nomina-periodos` | `anio` | `{ filas: LiquidacionResumen[], totales: { devengado, deducciones, neto } }` (ADMIN, NOMINA) |
-| GET | `/reportes/pendientes` | — | `{ materiales: (Material & { proyecto: ProyectoRef, vencido: boolean })[], herramientas: (Herramienta & { proyecto: ProyectoRef })[] }` — materiales PENDIENTE/SOLICITADO (vencido: fechaRequerida < hoy) y herramientas ASIGNADA con devolución prevista |
-| GET | `/reportes/avance-proyectos` | `?estado` (def. ACTIVO) | `{ proyecto: Proyecto, avance: Omit<AvanceProyecto, 'curva'> }[]` |
-| GET | `/reportes/proyectos/:id/resumen` | `?desde&hasta` (def. toda la vida del proyecto) | `{ proyecto, asignaciones: Asignacion[], horas: { total, horasExtra, porTipo: { codigo, nombre, horas }[] }, costoManoObra, costoPorTrabajador: { trabajadorId, nombre, horas, costo }[], avance: Omit<AvanceProyecto,'curva'>, pendientes: { materiales: number, herramientas: number } }` |
+| GET | `/reportes/proyectos/:id/resumen` | `?desde&hasta` (def. toda la vida del proyecto) | `{ proyecto, asignaciones: Asignacion[], horas: { total, horasExtra, porTipo: { codigo, nombre, horas }[] }, costoManoObra, costoPorTrabajador: { trabajadorId, nombre, horas, costo }[], costoMateriales, costoPorMaterial: { materialId, nombre, cantidad, costo }[], gastoTotal }` (gastoTotal = mano de obra + materiales) |
 | GET | `/reportes/dashboard` | — | ver abajo |
 
 ```ts
@@ -276,15 +246,13 @@ type Dashboard = {
          porTipo: { codigo: CodigoTipoHora; nombre: string; horas: number }[] };
   costoPorProyecto: { proyectoId: number; codigo: string; nombre: string; horas: number; costo: number }[]; // mes, top 8
   alertasHorasExtra: number;                    // mes en curso
-  materialesPendientes: number; herramientasVencidas: number;
-  avanceProyectos: { id: number; codigo: string; nombre: string; avanceReal: number; avancePlaneado: number; estado: EstadoAvance }[];
   ultimaLiquidacion: LiquidacionResumen | null;  // null si el rol no es ADMIN/NOMINA
 };
 ```
 
 `clave` del reporte de horas: id del trabajador o del proyecto, código del tipo de hora (`HED`) o la fecha, según la agrupación.
 
-**Costo de mano de obra** (directo, sin carga prestacional): `horas × valorHora × (1 + recargo)` por fecha, con el salario actual del trabajador y los parámetros vigentes en la fecha trabajada.
+**Costo de mano de obra** (directo, sin carga prestacional): `horas × valorHora × (1 + recargo)` por fecha, con el salario actual del trabajador y los parámetros vigentes en la fecha trabajada. Es lo que se refleja en los costos de cada proyecto.
 
 ## Auditoría (ADMIN)
 
@@ -292,4 +260,4 @@ type Dashboard = {
 |---|---|---|---|
 | GET | `/auditoria` | `?entidad&entidadId&usuarioId&accion&desde&hasta&pagina&limite` | `Pagina<{ id, entidad, entidadId, accion, datosAnteriores, datosNuevos, descripcion, usuarioId, usuarioEmail, fecha }>` |
 
-Entidades auditadas: `Usuario`, `Trabajador`, `Proyecto`, `AsignacionProyecto`, `ParametroLegal`, `RegistroHoras`, `LiquidacionNomina`, `MaterialProyecto`, `HerramientaProyecto`, `HitoProyecto`, `BitacoraEntrada`.
+Entidades auditadas: `Usuario`, `Trabajador`, `Proyecto`, `AsignacionProyecto`, `ParametroLegal`, `RegistroHoras`, `LiquidacionNomina`, `MaterialProyecto`.

@@ -1,6 +1,6 @@
 # Sistema de Gestión de Proyectos y Nómina — Lineamientos
 
-ERP web para una empresa de ingeniería eléctrica en Colombia: proyectos, trabajadores, registro de horas, nómina colombiana, materiales/herramientas, avance y bitácora. Uso interno (pocos usuarios), escalable.
+ERP web para una empresa de ingeniería eléctrica en Colombia: proyectos, trabajadores, registro de horas, nómina colombiana, materiales. Uso interno (pocos usuarios), escalable.
 
 ## Repositorios
 
@@ -42,7 +42,8 @@ El contrato de API está en `docs/API.md`: es la fuente de verdad entre backend 
 
 Reglas clave (implementadas en `gestion-proyecto-back/src/modules/nomina/calculo/`):
 - Valor hora = salario ÷ (jornada semanal × 5) → con 42 h, salario ÷ 210.
-- Salario mensual: se paga por días (30 días/mes); horas ordinarias ya incluidas → solo se pagan recargos. Extras y salario por hora: valor hora × (1 + recargo).
+- Horas y nómina son **semanales** (lunes a domingo): las horas se registran por día (grilla de lunes a domingo por trabajador, proyecto y tipo de hora) y la liquidación agrupa los días de una semana. No hay fecha de ingreso/retiro ni fechas de asignación; solo `estado` ACTIVO/INACTIVO.
+- Salario mensual: se paga por días (7/30 por semana); horas ordinarias ya incluidas → solo se pagan recargos. Extras y salario por hora: valor hora × (1 + recargo).
 - Extra nocturna (75 %) no acumula el nocturno; el dominical sí se suma a nocturno y extras.
 - Auxilio de transporte si salario ≤ 2 SMMLV (fuera del IBC). FSP 1–2 % desde 4 SMMLV. Retención: procedimiento 1, art. 383 E.T. (tabla en UVT), renta exenta 25 % con tope 790 UVT/año.
 - Cualquier cambio de horas, salarios o parámetros marca las liquidaciones en borrador para recálculo; una liquidación cerrada bloquea las horas de su periodo.
